@@ -56,9 +56,14 @@ main{max-width:1240px;margin:0 auto;padding:16px 16px 60px}
 .roundnav b{font-size:12px;font-weight:600;color:var(--dim);margin-right:2px}
 .roundnav button{font-size:12.5px;padding:4px 11px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--muted)}
 .roundnav button:hover{border-color:var(--accent);color:var(--fg)}
-.draw{position:relative;display:flex;align-items:stretch;gap:42px;overflow-x:auto;padding:0 2px 18px;cursor:grab;overscroll-behavior-x:contain}
+.zoom{display:flex;align-items:center;gap:4px;margin-left:auto}
+.zoom button{min-width:30px}
+.zoom span{font-size:12px;color:var(--dim);min-width:38px;text-align:center}
+.draw{position:relative;overflow-x:auto;padding:0 2px 18px;cursor:grab;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
 .draw.grabbing{cursor:grabbing;user-select:none}
-.draw svg.links{position:absolute;left:0;top:0;pointer-events:none}
+.sizer{position:relative}
+.canvas{position:absolute;left:0;top:0;width:max-content;display:flex;align-items:stretch;gap:42px;transform-origin:0 0}
+.canvas svg.links{position:absolute;left:0;top:0;pointer-events:none}
 .col{flex:0 0 248px;display:flex;flex-direction:column}
 .colhead{display:flex;justify-content:space-between;align-items:baseline;padding:2px 2px 10px;font-size:13px;font-weight:650}
 .colhead i{font-style:normal;color:var(--dim);font-weight:500}
@@ -178,7 +183,7 @@ async function getJSON(url){
 const state = {
   sport: SPORTS[0],
   loading:false, error:null, lastLoad:0, hasLive:false,
-  sig:'', scrollLeft:0,
+  sig:'', scrollLeft:0, zoom:null, zoomEff:1,
   tennis:{ tournaments:[], pick:null, group:null, onlyLive:false, from:null },
   league:{ events:[], standings:null, view:'spiele', weekOffset:0, open:new Set(), tickers:new Map() },
 };
@@ -356,10 +361,10 @@ function linkRounds(rounds){
   if(rounds.length) rounds[rounds.length-1].list.forEach(m=>{ m.__parent=''; });
 }
 
-function drawLinks(){
-  const draw = document.querySelector('.draw'); if(!draw) return;
-  const svg = draw.querySelector('svg.links'); if(!svg) return;
-  const cards = [...draw.querySelectorAll('.m')];
+function drawLinks(W,H){
+  const canvas = document.querySelector('.canvas'); if(!canvas) return;
+  const svg = canvas.querySelector('svg.links'); if(!svg) return;
+  const cards = [...canvas.querySelectorAll('.m')];
   const pos = new Map(cards.map(c=>[c.dataset.mid,
     {x:c.offsetLeft, y:c.offsetTop, w:c.offsetWidth, h:c.offsetHeight}]));
   let d='';
@@ -370,14 +375,31 @@ function drawLinks(){
     const x1=A.x+A.w, y1=A.y+A.h/2, x2=B.x, y2=B.y+B.h/2, mx=x1+(x2-x1)/2;
     d += `M${x1} ${y1}H${mx}V${y2}H${x2} `;
   });
-  svg.setAttribute('width', draw.scrollWidth);
-  svg.setAttribute('height', draw.scrollHeight);
+  svg.setAttribute('width', W || canvas.offsetWidth);
+  svg.setAttribute('height', H || canvas.offsetHeight);
   svg.innerHTML = `<path d="${d}" fill="none" stroke="var(--line)" stroke-width="1.5"/>`;
+}
+
+function layoutDraw(){
+  const draw = document.querySelector('.draw'); if(!draw) return;
+  const canvas = draw.querySelector('.canvas'), sizer = draw.querySelector('.sizer');
+  if(!canvas || !sizer) return;
+  canvas.style.transform = 'scale(1)';
+  const W = canvas.offsetWidth, H = canvas.offsetHeight;
+  let z = state.zoom;
+  if(z == null) z = Math.min(1, Math.max(0.45, (draw.clientWidth - 6) / W));
+  z = Math.round(z*100)/100;
+  canvas.style.transform = `scale(${z})`;
+  sizer.style.width = (W*z)+'px'; sizer.style.height = (H*z)+'px';
+  state.zoomEff = z;
+  const lbl = document.querySelector('#zoomlbl'); if(lbl) lbl.textContent = Math.round(z*100)+'%';
+  drawLinks(W,H);
 }
 
 function enableDrag(draw){
   let down=false, x0=0, l0=0;
   draw.addEventListener('pointerdown', e=>{
+    if(e.pointerType !== 'mouse') return;
     if(e.target.closest('a,button')) return;
     down=true; x0=e.clientX; l0=draw.scrollLeft; draw.classList.add('grabbing');
   });
@@ -449,23 +471,38 @@ function renderTennis(){
 
   view.innerHTML =
     `<nav class="roundnav"><b>Zur Runde:</b>${shown.map((r,i)=>
-        `<button data-col="${i}">${esc(roundDE(r.name))}</button>`).join('')}</nav>
-     <div class="draw" style="--h:${H}px">
+        `<button data-col="${i}">${esc(roundDE(r.name))}</button>`).join('')}
+        <span class="zoom"><button data-zoom="out" title="Kleiner">−</button>
+        <span id="zoomlbl">100%</span>
+        <button data-zoom="in" title="Größer">+</button>
+        <button data-zoom="fit">Ganz zeigen</button></span></nav>
+     <div class="draw"><div class="sizer"><div class="canvas" style="--h:${H}px">
        <svg class="links" aria-hidden="true"></svg>
        ${shown.map(r=>`<section class="col">
           <div class="colhead"><span>${esc(roundDE(r.name))}</span><i>${r.list.length}</i></div>
           <div class="slots">${r.list.map(matchCard).join('')}</div>
         </section>`).join('')}
-     </div>`;
+     </div></div></div>`;
 
   const draw = view.querySelector('.draw');
   enableDrag(draw);
   draw.scrollLeft = state.scrollLeft || 0;
+  const cols = [...view.querySelectorAll('.col')];
   view.querySelectorAll('[data-col]').forEach(b=>{
-    b.onclick=()=>{ draw.children[Number(b.dataset.col)+1]
-      ?.scrollIntoView({behavior:'smooth', inline:'start', block:'nearest'}); };
+    b.onclick=()=>{
+      const c = cols[Number(b.dataset.col)]; if(!c) return;
+      draw.scrollTo({left: c.offsetLeft*state.zoomEff - 4, behavior:'smooth'});
+    };
   });
-  requestAnimationFrame(drawLinks);
+  view.querySelectorAll('[data-zoom]').forEach(b=>{
+    b.onclick=()=>{
+      const k=b.dataset.zoom;
+      state.zoom = k==='fit' ? null
+        : Math.min(1, Math.max(0.3, state.zoomEff + (k==='in'?0.1:-0.1)));
+      layoutDraw();
+    };
+  });
+  requestAnimationFrame(layoutDraw);
 }
 
 /* ========================= 7) Render: Liga ========================= */
@@ -637,7 +674,7 @@ async function load(force=true){
   state.loading=false;
   const sig = signature(), changed = sig !== state.sig;
   state.sig = sig;
-  if(force || changed || state.error) render(); else requestAnimationFrame(drawLinks);
+  if(force || changed || state.error) render(); else requestAnimationFrame(layoutDraw);
   tickClock();
 }
 
@@ -651,7 +688,7 @@ function tickClock(){
 }
 
 $('#reload').onclick = ()=>load(true);
-addEventListener('resize', ()=>requestAnimationFrame(drawLinks));
+addEventListener('resize', ()=>requestAnimationFrame(layoutDraw));
 setInterval(tickClock, 1000);
 setInterval(()=>{                       // Auto-Refresh: 30s wenn live, sonst 3 min
   if(state.loading) return;
