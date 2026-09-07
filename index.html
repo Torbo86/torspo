@@ -8,14 +8,14 @@
 :root{
   --bg:#f5f7f1; --panel:#ffffff; --panel2:#eef4ea; --line:#dde3d6;
   --fg:#1b2c22; --muted:#68786d; --live:#c8402f; --dim:#9aa79d;
-  --accent:#00703c; --accent2:#4c2c69;
+  --accent:#00703c; --accent2:#4c2c69; --tint:#e4f2e2;
   --r:10px;
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
 body{
   background:
-    radial-gradient(1100px 520px at 12% -12%, #e2efe1 0%, transparent 62%),
+    radial-gradient(1100px 520px at 12% -12%, var(--tint) 0%, transparent 62%),
     var(--bg);
   color:var(--fg);
   font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
@@ -25,13 +25,20 @@ body{
 }
 .num{font-variant-numeric:tabular-nums}
 header{position:sticky;top:0;z-index:20;background:rgba(245,247,241,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+#accentbar{height:3px;background:var(--accent);transition:background-color .45s ease}
+@keyframes swapin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+#view.swap{animation:swapin .38s ease}
+@media (prefers-reduced-motion:reduce){#view.swap{animation:none}}
 .bar{max-width:1240px;margin:0 auto;padding:12px 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
 .brand{display:flex;align-items:baseline;gap:10px;margin-right:auto}
 .brand b{font-size:19px;font-weight:700;letter-spacing:-.01em}
 .brand span{color:var(--muted);font-size:12.5px}
+.brand #appver{color:var(--dim)}
+.brand #crumb:not(:empty)::before{content:'· '}
+.brand em{font-style:normal;font-size:11.5px;color:var(--dim);border:1px solid var(--line);border-radius:999px;padding:1px 7px}
 .tabs{display:flex;gap:6px;flex-wrap:wrap}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
-.tab{padding:7px 13px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--muted)}
+.tab{padding:7px 13px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--muted);transition:background-color .35s,border-color .35s,color .35s}
 .tab:hover{border-color:var(--accent)}
 .tab[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:650}
 .status{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
@@ -47,6 +54,27 @@ main{max-width:1240px;margin:0 auto;padding:16px 16px 60px}
 .chip[aria-pressed="true"]{border-color:var(--accent);color:var(--fg);background:var(--panel2)}
 .sel{background:var(--panel);border:1px solid var(--line);color:var(--fg);border-radius:8px;padding:6px 10px;font:inherit;font-size:13px}
 .hint{color:var(--muted);font-size:13px}
+.modal{position:fixed;inset:0;z-index:50;background:rgba(20,34,26,.45);display:flex;align-items:flex-start;justify-content:center;padding:56px 16px}
+.modal[hidden]{display:none}
+.sheet{background:var(--panel);border:1px solid var(--line);border-radius:14px;width:100%;max-width:520px;padding:20px 22px;max-height:80vh;overflow:auto}
+.sheet h2{margin:0;font-size:17px}
+.sheet .ver{color:var(--muted);font-size:13px;margin:2px 0 18px}
+.sheet h3{font-size:12.5px;margin:20px 0 10px;color:var(--dim);font-weight:600}
+.sheet p{font-size:13px;color:var(--muted);margin:0 0 10px}
+.rel{border-left:2px solid var(--line);padding-left:12px;margin-bottom:14px}
+.rel.now{border-left-color:var(--accent)}
+.dt{display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--line)}
+.dt.w{font-weight:650}
+.dt .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dt img{width:19px;height:13px;object-fit:cover;border-radius:2px}
+.dt .sets{font-size:14px}
+.st{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;font-size:13px;padding:5px 0;border-bottom:1px solid var(--line)}
+.st .lb{color:var(--dim);text-align:center;font-size:11.5px}
+.st .a{text-align:right}
+.meta{font-size:12.5px;color:var(--muted);margin:10px 0 0}
+.rel b{font-size:13.5px}
+.rel ul{margin:4px 0 0;padding-left:17px;font-size:13px;color:var(--muted)}
+.rel li{margin:3px 0}
 .err{border:1px solid #e3c2bb;background:#fdf1ee;color:#8a2f1f;padding:12px 14px;border-radius:var(--r);font-size:14px}
 .empty{color:var(--muted);padding:28px 4px}
 .skel{color:var(--muted);padding:28px 4px}
@@ -59,23 +87,28 @@ main{max-width:1240px;margin:0 auto;padding:16px 16px 60px}
 .zoom{display:flex;align-items:center;gap:4px;margin-left:auto}
 .zoom button{min-width:30px}
 .zoom span{font-size:12px;color:var(--dim);min-width:38px;text-align:center}
-.draw{position:relative;overflow-x:auto;padding:0 2px 18px;cursor:grab;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+.draw{position:relative;overflow:auto;height:min(74vh,880px);padding:10px;cursor:grab;
+  border:1px solid var(--line);border-radius:12px;background:var(--panel2);
+  touch-action:pan-x pan-y;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 .draw.grabbing{cursor:grabbing;user-select:none}
 .sizer{position:relative}
 .canvas{position:absolute;left:0;top:0;width:max-content;display:flex;align-items:stretch;gap:42px;transform-origin:0 0}
 .canvas svg.links{position:absolute;left:0;top:0;pointer-events:none}
 .col{flex:0 0 248px;display:flex;flex-direction:column}
-.colhead{display:flex;justify-content:space-between;align-items:baseline;padding:2px 2px 10px;font-size:13px;font-weight:650}
+.colhead{display:flex;justify-content:space-between;align-items:baseline;padding:2px 4px 7px;margin-bottom:8px;font-size:13px;font-weight:650;color:var(--accent);border-bottom:2px solid var(--accent)}
 .colhead i{font-style:normal;color:var(--dim);font-weight:500}
 .slots{flex:1;display:flex;flex-direction:column;justify-content:space-around;height:var(--h)}
-.m{position:relative;z-index:1;background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--line);
+.m{position:relative;z-index:1;cursor:pointer;text-align:left;width:100%;font:inherit;background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--line);
   border-radius:var(--r);padding:9px 11px}
 .m.is-live{border-left-color:var(--live);background:var(--panel2)}
 .m.is-done{border-left-color:var(--accent)}
+.m{transition:border-color .35s}
 .mtop{display:flex;justify-content:space-between;gap:8px;font-size:11.5px;color:var(--muted);margin-bottom:7px}
 .mtop .lv{color:var(--live);font-weight:650}
 .p{display:flex;align-items:center;gap:7px;padding:3px 0;color:var(--dim)}
 .p.w{color:var(--fg);font-weight:600}
+.p.w .nm{color:var(--accent)}
+.p.w .sets{color:var(--accent)}
 .p .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13.5px}
 .p .sd{font-size:10.5px;color:var(--muted);flex:0 0 auto}
 .p img{width:17px;height:12px;object-fit:cover;border-radius:2px;flex:0 0 auto;opacity:.9}
@@ -86,11 +119,14 @@ main{max-width:1240px;margin:0 auto;padding:16px 16px 60px}
 
 /* ---------- Liga ---------- */
 .day{margin-bottom:22px}
-.dayhead{font-size:13px;font-weight:650;color:var(--muted);padding:0 2px 8px}
+.dayhead{font-size:13px;font-weight:650;color:var(--accent);padding:0 0 8px 9px;border-left:3px solid var(--accent);line-height:1.1;margin-bottom:6px}
+.cdot{width:4px;height:22px;border-radius:2px;flex:0 0 auto;display:inline-block}
+.tdot{width:9px;height:9px;border-radius:50%;flex:0 0 auto;display:inline-block}
 .game{display:block;width:100%;text-align:left;background:var(--panel);border:1px solid var(--line);
   border-left:3px solid var(--line);border-radius:var(--r);padding:11px 13px;margin-bottom:8px}
 .game.is-live{border-left-color:var(--live);background:var(--panel2)}
 .game.is-done{border-left-color:var(--accent)}
+.game{transition:border-color .35s}
 .grow{display:grid;grid-template-columns:64px 1fr auto 1fr;gap:10px;align-items:center}
 .when{font-size:12px;color:var(--muted)}
 .when.lv{color:var(--live);font-weight:650}
@@ -98,8 +134,8 @@ main{max-width:1240px;margin:0 auto;padding:16px 16px 60px}
 .team.a{justify-content:flex-end;text-align:right}
 .team img{width:22px;height:22px;object-fit:contain;flex:0 0 auto}
 .team span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
-.score{font-size:17px;font-weight:700;letter-spacing:.02em;padding:0 4px}
-.score.pre{font-size:13px;font-weight:500;color:var(--muted)}
+.score{font-size:17px;font-weight:700;letter-spacing:.02em;padding:2px 11px;background:var(--tint);border-radius:8px;transition:background-color .35s}
+.score.pre{font-size:13px;font-weight:500;color:var(--muted);background:none}
 .venue{margin-top:8px;font-size:11.5px;color:var(--dim);padding-left:74px}
 .ticker{margin:10px 0 2px 74px;border-left:2px solid var(--line);padding-left:12px}
 .tk{display:grid;grid-template-columns:38px 20px 1fr;gap:8px;font-size:12.5px;color:var(--muted);padding:3px 0}
@@ -125,15 +161,19 @@ main{max-width:1240px;margin:0 auto;padding:16px 16px 60px}
 
 <header>
   <div class="bar">
-    <div class="brand"><b>TorSpo</b><span id="crumb"></span></div>
+    <div class="brand"><b>TorSpo</b><em id="ver"></em><span id="crumb"></span></div>
     <nav class="tabs" id="tabs"></nav>
     <div class="status">
       <span class="dot" id="dot"></span>
       <span id="stamp">lädt…</span>
       <button class="iconbtn" id="reload">Neu laden</button>
+      <button class="iconbtn" id="settings" title="Einstellungen">Einstellungen</button>
     </div>
   </div>
+  <div id="accentbar"></div>
 </header>
+
+<div class="modal" id="modal" hidden><div class="sheet" id="sheet"></div></div>
 
 <main>
   <div class="sub" id="sub"></div>
@@ -149,15 +189,46 @@ main{max-width:1240px;margin:0 auto;padding:16px 16px 60px}
    kind:'league' -> Spieltag + Tabelle (funktioniert für jede ESPN-Liga)
    ========================================================================= */
 const SPORTS = [
-  { id:'tennis', label:'Tennis', kind:'draw', accent:'#00703c',
+  { id:'tennis', label:'Tennis', kind:'draw', accent:'#00703c', tint:'#e4f2e2',
     tours:[{key:'atp',label:'ATP'},{key:'wta',label:'WTA'}], path:'tennis' },
-  { id:'ger.1',  label:'Bundesliga',    kind:'league', accent:'#b0392c', path:'soccer/ger.1', standings:'soccer/ger.1' },
-  { id:'ger.2',  label:'2. Bundesliga', kind:'league', accent:'#c07d16', path:'soccer/ger.2', standings:'soccer/ger.2' },
+  { id:'ger.1',  label:'Bundesliga',    kind:'league', accent:'#b0392c', tint:'#fbe6e1', path:'soccer/ger.1', standings:'soccer/ger.1' },
+  { id:'ger.2',  label:'2. Bundesliga', kind:'league', accent:'#c07d16', tint:'#fbeed6', path:'soccer/ger.2', standings:'soccer/ger.2' },
   // Beispiele zum Erweitern (einfach Kommentar entfernen):
-  // { id:'uefa.champions', label:'Champions League', kind:'league', accent:'#7d7bff', path:'soccer/uefa.champions', standings:'soccer/uefa.champions' },
-  // { id:'eng.1', label:'Premier League', kind:'league', accent:'#38d39f', path:'soccer/eng.1', standings:'soccer/eng.1' },
-  // { id:'nba',   label:'NBA',            kind:'league', accent:'#ff8a3d', path:'basketball/nba', standings:'basketball/nba' },
+  // { id:'uefa.champions', label:'Champions League', kind:'league', accent:'#5b57d6', tint:'#e7e6fb', path:'soccer/uefa.champions', standings:'soccer/uefa.champions' },
+  // { id:'eng.1', label:'Premier League', kind:'league', accent:'#1f9d74', tint:'#e0f4ec', path:'soccer/eng.1', standings:'soccer/eng.1' },
+  // { id:'nba',   label:'NBA',            kind:'league', accent:'#d2691e', tint:'#fbeadd', path:'basketball/nba', standings:'basketball/nba' },
 ];
+
+const APP = {
+  version: '1.5.0',
+  notes: [
+    { v:'1.5.0', items:[
+      'Tennis deutlich grüner, Rundenköpfe und Sieger in Rasengrün',
+      'Fußball mit Vereinsfarben an jedem Spiel und in der Tabelle',
+      'Beim Wechsel der Sportart wandert die Farbe mit, inklusive kurzer Überblendung' ]},
+    { v:'1.4.0', items:[
+      'Versionsnummer im Fenstertitel und in der Kopfzeile',
+      'Das Tableau ist ein eigener Bereich mit Rahmen: Mausrad zoomt darin wie bei einer Karte, die Seite scrollt außerhalb weiter',
+      'Am Handy mit zwei Fingern auf- und zuziehen, mit einem Finger schieben',
+      'Zoom reicht jetzt von 25 bis 200 Prozent' ]},
+    { v:'1.3.0', items:[
+      'Zoom für das Tableau mit "Ganz zeigen", am Handy wird beim Öffnen automatisch passend rausgezoomt',
+      'Seitliches Wischen am Handy funktioniert jetzt sauber',
+      'Einstellungen mit Versionsnummer und Neuigkeiten',
+      'Zuletzt gewählte Ansicht wird gespeichert, Turniere lassen sich als Favorit markieren' ]},
+    { v:'1.2.0', items:[
+      'Echter Turnierbaum: Partien stehen an der Stelle, wo ihr Sieger weiterspielt, mit Verbindungslinien',
+      'Rundennavigation und Auswahl der Startrunde',
+      'Die Ansicht springt beim automatischen Aktualisieren nicht mehr zurück' ]},
+    { v:'1.1.0', items:[
+      'Aus Spielplan wird TorSpo',
+      'Helles Farbschema in Wimbledon-Grün' ]},
+    { v:'1.0.0', items:[
+      'Tennis-Tableau für ATP und WTA mit Turnierauswahl',
+      'Bundesliga und 2. Bundesliga mit Spieltag, Stadion, Live-Ticker und Tabelle',
+      'Automatische Aktualisierung, alle 30 Sekunden bei Live-Spielen' ]},
+  ]
+};
 
 const API  = 'https://site.api.espn.com/apis/site/v2/sports/';
 const APIV2= 'https://site.api.espn.com/apis/v2/sports/';
@@ -179,12 +250,22 @@ async function getJSON(url){
   return r.json();
 }
 
-/* ============================ 3) Zustand ============================ */
+/* ===================== 3) Zustand + Speicher ===================== */
+const STORE = 'torspo.v1';
+function readPrefs(){ try{ return JSON.parse(localStorage.getItem(STORE)) || {}; }catch(e){ return {}; } }
+function savePrefs(){
+  try{ localStorage.setItem(STORE, JSON.stringify({
+    sport: state.sport.id, favs: [...state.favs], zoom: state.zoom,
+    pick: state.tennis.pick, group: state.tennis.group, from: state.tennis.from,
+    lview: state.league.view
+  })); }catch(e){}
+}
+
 const state = {
   sport: SPORTS[0],
   loading:false, error:null, lastLoad:0, hasLive:false,
-  sig:'', scrollLeft:0, zoom:null, zoomEff:1,
-  tennis:{ tournaments:[], pick:null, group:null, onlyLive:false, from:null },
+  sig:'', scrollLeft:0, scrollTop:0, zoom:null, zoomEff:1, dw:1, dh:1, favs:new Set(),
+  tennis:{ tournaments:[], pick:null, group:null, onlyLive:false, from:null, byId:new Map() },
   league:{ events:[], standings:null, view:'spiele', weekOffset:0, open:new Set(), tickers:new Map() },
 };
 
@@ -241,7 +322,7 @@ function roundDE(r){
 async function loadTennis(){
   const from = ymd(addDays(new Date(),-18)), to = ymd(addDays(new Date(),4));
   const jobs = state.sport.tours.map(t =>
-    getJSON(`${API}tennis/${t.key}/scoreboard?dates=${from}-${to}`).then(d=>({tour:t.label,d}))
+    getJSON(`${API}tennis/${t.key}/scoreboard?dates=${from}-${to}`).then(d=>({tour:t.label,key:t.key,d}))
   );
   const res = await Promise.allSettled(jobs);
   if(res.every(r=>r.status==='rejected')) throw res[0].reason;
@@ -255,7 +336,7 @@ async function loadTennis(){
       tennisComps(ev).forEach(({c,group})=>{
         if(T.seen.has(c.id)) return;
         T.seen.add(c.id);
-        c.__tour = value.tour;
+        c.__tour = value.tour; c.__key = value.key; c.__event = name;
         const g = groupDE(group);
         if(!T.groups.has(g)) T.groups.set(g,[]);
         T.groups.get(g).push(c);
@@ -267,9 +348,11 @@ async function loadTennis(){
     });
   });
 
-  const list = [...map.values()].filter(t=>t.seen.size).sort((a,b)=> (b.live-a.live) || (b.last-a.last));
+  const list = [...map.values()].filter(t=>t.seen.size).sort((a,b)=>
+    ((state.favs.has(b.name)?1:0)-(state.favs.has(a.name)?1:0)) || (b.live-a.live) || (b.last-a.last));
   state.tennis.tournaments = list;
-  if(!state.tennis.pick || !list.some(t=>t.name===state.tennis.pick)) state.tennis.pick = list[0]?.name || null;
+  if(!state.tennis.pick || !list.some(t=>t.name===state.tennis.pick))
+    state.tennis.pick = list.find(t=>state.favs.has(t.name))?.name || list[0]?.name || null;
   const cur = list.find(t=>t.name===state.tennis.pick);
   const groups = cur ? [...cur.groups.keys()] : [];
   if(!groups.includes(state.tennis.group)) state.tennis.group = groups.find(g=>/einzel|singles/i.test(g)) || groups[0] || null;
@@ -309,12 +392,16 @@ function playerFlag(cp){
   const f = cp.athlete?.flag?.href || cp.flag?.href;
   return f ? `<img src="${esc(f)}" alt="" loading="lazy" onerror="this.remove()">` : '';
 }
+function courtOf(c){
+  return c.court?.fullName || c.court?.displayName || c.court?.name
+      || c.venue?.fullName || c.venue?.displayName || c.note || '';
+}
 function matchCard(c){
   const st = c.status?.type?.state, live = st==='in', done = st==='post' || c.status?.type?.completed;
   const d = c.date ? new Date(c.date) : null;
-  const when = live ? '<span class="lv">● live</span>'
-             : done ? 'beendet'
-             : d ? `${fmtDay(d).replace(/,.*?(\d)/,' $1')} · ${fmtTime(d)} Uhr` : 'Termin offen';
+  const stamp = d ? `${fmtDay(d).replace(/,.*?(\d)/,' $1')}, ${fmtTime(d)} Uhr` : 'Termin offen';
+  const when = live ? `<span class="lv">● live</span> ${esc(stamp)}`
+             : done ? `beendet · ${esc(stamp)}` : esc(stamp);
   const rows = (c.competitors||[]).map(cp=>{
     const sets = (cp.linescores||[]).map(setBox).join('');
     const seed = cp.seed || cp.athlete?.seed;
@@ -326,12 +413,12 @@ function matchCard(c){
     </div>`;
   }).join('');
   const note = c.status?.type?.detail && !done ? c.status.type.detail : '';
-  const venue = c.venue?.fullName || c.court?.fullName || c.note || '';
-  return `<article class="m ${live?'is-live':''} ${done?'is-done':''}" data-mid="${esc(c.id)}" data-parent="${esc(c.__parent||'')}">
+  const venue = courtOf(c);
+  return `<button type="button" class="m ${live?'is-live':''} ${done?'is-done':''}" data-mid="${esc(c.id)}" data-parent="${esc(c.__parent||'')}">
     <div class="mtop"><span>${when}</span><span>${esc(c.__tour||'')}</span></div>
     ${rows}
     ${(venue||note)?`<div class="mfoot">${esc(venue||note)}</div>`:''}
-  </article>`;
+  </button>`;
 }
 
 function nameKey(cp){
@@ -380,33 +467,87 @@ function drawLinks(W,H){
   svg.innerHTML = `<path d="${d}" fill="none" stroke="var(--line)" stroke-width="1.5"/>`;
 }
 
-function layoutDraw(){
+function applyScale(z){
   const draw = document.querySelector('.draw'); if(!draw) return;
   const canvas = draw.querySelector('.canvas'), sizer = draw.querySelector('.sizer');
   if(!canvas || !sizer) return;
-  canvas.style.transform = 'scale(1)';
-  const W = canvas.offsetWidth, H = canvas.offsetHeight;
-  let z = state.zoom;
-  if(z == null) z = Math.min(1, Math.max(0.45, (draw.clientWidth - 6) / W));
-  z = Math.round(z*100)/100;
+  z = Math.min(2, Math.max(0.25, Math.round(z*100)/100));
   canvas.style.transform = `scale(${z})`;
-  sizer.style.width = (W*z)+'px'; sizer.style.height = (H*z)+'px';
+  sizer.style.width = (state.dw*z)+'px'; sizer.style.height = (state.dh*z)+'px';
   state.zoomEff = z;
   const lbl = document.querySelector('#zoomlbl'); if(lbl) lbl.textContent = Math.round(z*100)+'%';
-  drawLinks(W,H);
+  return z;
 }
 
-function enableDrag(draw){
-  let down=false, x0=0, l0=0;
+// Zoomen um einen festen Punkt herum, wie bei einer Karte.
+function zoomAt(z, ax, ay){
+  const draw = document.querySelector('.draw'); if(!draw) return;
+  const z1 = state.zoomEff || 1;
+  const cx = (draw.scrollLeft + ax)/z1, cy = (draw.scrollTop + ay)/z1;
+  state.zoom = applyScale(z);
+  draw.scrollLeft = cx*state.zoomEff - ax;
+  draw.scrollTop  = cy*state.zoomEff - ay;
+}
+
+function layoutDraw(){
+  const draw = document.querySelector('.draw'); if(!draw) return;
+  const canvas = draw.querySelector('.canvas'); if(!canvas) return;
+  canvas.style.transform = 'scale(1)';
+  state.dw = canvas.offsetWidth; state.dh = canvas.offsetHeight;
+  applyScale(state.zoom == null
+    ? Math.min(1, Math.max(0.3, (draw.clientWidth - 24)/state.dw))
+    : state.zoom);
+  drawLinks(state.dw, state.dh);
+}
+
+function enableGestures(draw){
+  // Ziehen mit der Maus
+  let down=false, x0=0, y0=0, l0=0, t0=0;
+  const pts = new Map(); let pinch = null;
+
   draw.addEventListener('pointerdown', e=>{
-    if(e.pointerType !== 'mouse') return;
-    if(e.target.closest('a,button')) return;
-    down=true; x0=e.clientX; l0=draw.scrollLeft; draw.classList.add('grabbing');
+    pts.set(e.pointerId, {x:e.clientX, y:e.clientY});
+    if(pts.size === 2){
+      const [a,b] = [...pts.values()];
+      pinch = { d: Math.hypot(a.x-b.x, a.y-b.y) || 1, z: state.zoomEff };
+      down = false; draw.classList.remove('grabbing');
+      return;
+    }
+    if(e.pointerType !== 'mouse' || e.target.closest('a,button')) return;
+    down=true; x0=e.clientX; y0=e.clientY; l0=draw.scrollLeft; t0=draw.scrollTop;
+    draw.classList.add('grabbing');
   });
-  draw.addEventListener('pointermove', e=>{ if(down) draw.scrollLeft = l0-(e.clientX-x0); });
-  ['pointerup','pointerleave','pointercancel'].forEach(ev=>
-    draw.addEventListener(ev, ()=>{ down=false; draw.classList.remove('grabbing'); }));
-  draw.addEventListener('scroll', ()=>{ state.scrollLeft = draw.scrollLeft; }, {passive:true});
+
+  draw.addEventListener('pointermove', e=>{
+    if(pts.has(e.pointerId)) pts.set(e.pointerId, {x:e.clientX, y:e.clientY});
+    if(pinch && pts.size === 2){                       // zwei Finger: aufziehen und zusammenziehen
+      const [a,b] = [...pts.values()];
+      const d = Math.hypot(a.x-b.x, a.y-b.y) || 1;
+      const r = draw.getBoundingClientRect();
+      zoomAt(pinch.z * (d/pinch.d), (a.x+b.x)/2 - r.left, (a.y+b.y)/2 - r.top);
+      e.preventDefault();
+      return;
+    }
+    if(down){ draw.scrollLeft = l0-(e.clientX-x0); draw.scrollTop = t0-(e.clientY-y0); }
+  });
+
+  ['pointerup','pointercancel','pointerleave'].forEach(ev=>draw.addEventListener(ev, e=>{
+    pts.delete(e.pointerId);
+    if(pts.size < 2) pinch = null;
+    down=false; draw.classList.remove('grabbing');
+  }));
+
+  // Mausrad zoomt, weil das Tableau ein eigener Bereich mit eigenem Scrollen ist
+  draw.addEventListener('wheel', e=>{
+    e.preventDefault();
+    const r = draw.getBoundingClientRect();
+    const step = e.deltaMode === 1 ? e.deltaY*16 : e.deltaY;
+    zoomAt(state.zoomEff * Math.exp(-step*0.0015), e.clientX-r.left, e.clientY-r.top);
+  }, {passive:false});
+
+  draw.addEventListener('scroll', ()=>{
+    state.scrollLeft = draw.scrollLeft; state.scrollTop = draw.scrollTop;
+  }, {passive:true});
 }
 
 function renderTennis(){
@@ -416,7 +557,8 @@ function renderTennis(){
 
   const sel = el('select','sel');
   state.tennis.tournaments.forEach(t=>{
-    const o=el('option'); o.value=t.name; o.textContent = t.name + (t.live?`  (${t.live} live)`:'');
+    const o=el('option'); o.value=t.name;
+    o.textContent = (state.favs.has(t.name)?'★ ':'') + t.name + (t.live?`  (${t.live} live)`:'');
     if(t.name===state.tennis.pick) o.selected=true; sel.appendChild(o);
   });
   sel.onchange = ()=>{ state.tennis.pick=sel.value;
@@ -424,6 +566,12 @@ function renderTennis(){
     state.tennis.group = g.find(x=>/einzel|singles/i.test(x))||g[0];
     state.tennis.from = null; state.scrollLeft = 0; render(); };
   sub.appendChild(sel);
+
+  const fav = el('button','chip', (state.favs.has(T.name)?'★':'☆') + ' Favorit');
+  fav.setAttribute('aria-pressed', state.favs.has(T.name));
+  fav.title = 'Turnier merken und beim Öffnen vorwählen';
+  fav.onclick = ()=>{ state.favs.has(T.name) ? state.favs.delete(T.name) : state.favs.add(T.name); render(); };
+  sub.appendChild(fav);
 
   [...T.groups.keys()].forEach(g=>{
     const b=el('button','chip',esc(g));
@@ -437,8 +585,10 @@ function renderTennis(){
   sub.appendChild(lv);
 
   // Runden bilden und verketten
+  state.tennis.byId = new Map();
   const byRound = new Map();
   (T.groups.get(state.tennis.group)||[]).forEach(c=>{
+    state.tennis.byId.set(String(c.id), c);
     const r=rawRound(c); if(!byRound.has(r)) byRound.set(r,[]); byRound.get(r).push(c);
   });
   let rounds = [...byRound.entries()].sort((x,y)=>roundRank(x[0])-roundRank(y[0]))
@@ -482,23 +632,25 @@ function renderTennis(){
           <div class="colhead"><span>${esc(roundDE(r.name))}</span><i>${r.list.length}</i></div>
           <div class="slots">${r.list.map(matchCard).join('')}</div>
         </section>`).join('')}
-     </div></div></div>`;
+     </div></div></div>
+     <p class="hint" style="margin:8px 2px 0">Mausrad zoomt, Ziehen verschiebt. Am Handy zwei Finger zum Zoomen.</p>`;
 
   const draw = view.querySelector('.draw');
-  enableDrag(draw);
-  draw.scrollLeft = state.scrollLeft || 0;
+  enableGestures(draw);
+  draw.scrollLeft = state.scrollLeft || 0; draw.scrollTop = state.scrollTop || 0;
+  view.querySelectorAll('.m').forEach(m=>{ m.onclick = ()=>openMatch(m.dataset.mid); });
   const cols = [...view.querySelectorAll('.col')];
   view.querySelectorAll('[data-col]').forEach(b=>{
     b.onclick=()=>{
       const c = cols[Number(b.dataset.col)]; if(!c) return;
-      draw.scrollTo({left: c.offsetLeft*state.zoomEff - 4, behavior:'smooth'});
+      draw.scrollTo({left: c.offsetLeft*state.zoomEff - 8, behavior:'smooth'});
     };
   });
   view.querySelectorAll('[data-zoom]').forEach(b=>{
     b.onclick=()=>{
       const k=b.dataset.zoom;
       state.zoom = k==='fit' ? null
-        : Math.min(1, Math.max(0.3, state.zoomEff + (k==='in'?0.1:-0.1)));
+        : Math.min(2, Math.max(0.25, state.zoomEff + (k==='in'?0.1:-0.1)));
       layoutDraw();
     };
   });
@@ -517,9 +669,12 @@ function gameRow(ev){
   const when = live ? `<span class="when lv num">${esc(c.status?.displayClock||'live')}</span>`
              : done ? `<span class="when">Endstand</span>`
                     : `<span class="when num">${fmtTime(d)}</span>`;
-  const tm = (t,side)=>`<div class="team ${side}">
-      ${side==='a'?'':''}${t.team?.logo?`<img src="${esc(t.team.logo)}" alt="" loading="lazy">`:''}
-      <span>${esc(t.team?.shortDisplayName||t.team?.displayName||'?')}</span></div>`;
+  const bar = t => t.team?.color ? `<i class="cdot" style="background:#${esc(t.team.color)}"></i>` : '';
+  const logo = t => t.team?.logo ? `<img src="${esc(t.team.logo)}" alt="" loading="lazy">` : '';
+  const nm   = t => `<span>${esc(t.team?.shortDisplayName||t.team?.displayName||'?')}</span>`;
+  const tm = (t,side)=> side==='a'
+    ? `<div class="team a">${nm(t)}${logo(t)}${bar(t)}</div>`
+    : `<div class="team b">${bar(t)}${logo(t)}${nm(t)}</div>`;
   const score = (live||done)
     ? `<span class="score num">${esc(home.score??'')} : ${esc(away.score??'')}</span>`
     : `<span class="score pre">gegen</span>`;
@@ -563,7 +718,7 @@ function renderStandings(){
   const val=(e,n)=>(e.stats||[]).find(s=>s.name===n)?.displayValue ?? '';
   const rows = entries.map((e,i)=>`<tr>
     <td class="num">${esc(val(e,'rank')||i+1)}</td>
-    <td><span class="tm">${e.team?.logos?.[0]?.href?`<img src="${esc(e.team.logos[0].href)}" alt="">`:''}${esc(e.team?.displayName||'')}</span></td>
+    <td><span class="tm">${e.team?.color?`<i class="tdot" style="background:#${esc(e.team.color)}"></i>`:''}${e.team?.logos?.[0]?.href?`<img src="${esc(e.team.logos[0].href)}" alt="">`:''}${esc(e.team?.displayName||'')}</span></td>
     <td class="r num">${esc(val(e,'gamesPlayed'))}</td>
     <td class="r num hide">${esc(val(e,'wins'))}</td>
     <td class="r num hide">${esc(val(e,'ties'))}</td>
@@ -623,17 +778,114 @@ function renderTabs(){
     b.onclick=()=>{ if(s.id===state.sport.id) return; state.sport=s; state.league.open.clear(); state.league.tickers.clear(); load(); };
     nav.appendChild(b);
   });
-  document.documentElement.style.setProperty('--accent', state.sport.accent);
+  const root = document.documentElement;
+  root.style.setProperty('--accent', state.sport.accent);
+  root.style.setProperty('--tint', state.sport.tint || '#e4f2e2');
+  if(state.lastSport !== state.sport.id){ state.lastSport = state.sport.id; state.swap = true; }
 }
+
+const STAT_DE = {
+  'aces':'Asse', 'ace':'Asse', 'double faults':'Doppelfehler', 'doublefaults':'Doppelfehler',
+  'first serve':'1. Aufschlag', 'first serve points won':'Punkte nach 1. Aufschlag',
+  'second serve points won':'Punkte nach 2. Aufschlag', 'break points won':'Breakbälle gewonnen',
+  'break points':'Breakbälle', 'winners':'Winner', 'unforced errors':'Unerzwungene Fehler',
+  'total points won':'Punkte gesamt', 'service games won':'Aufschlagspiele gewonnen',
+  'net points won':'Punkte am Netz', 'fastest serve':'Schnellster Aufschlag'
+};
+const statDE = l => STAT_DE[String(l).toLowerCase()] || l;
+
+function pullStats(d){
+  const cps = d?.competitions?.[0]?.competitors || d?.boxscore?.players || d?.competitors || [];
+  const rows = new Map();
+  cps.slice(0,2).forEach((cp,i)=>{
+    let raw = cp.statistics || cp.stats || [];
+    if(Array.isArray(raw) && raw.length && Array.isArray(raw[0]?.stats)) raw = raw.flatMap(g=>g.stats);
+    (raw||[]).forEach(st=>{
+      const label = st.displayName || st.label || st.name; if(!label) return;
+      if(!rows.has(label)) rows.set(label, ['','']);
+      rows.get(label)[i] = st.displayValue ?? st.value ?? '';
+    });
+  });
+  return [...rows.entries()].filter(([,v])=>v[0]!=='' || v[1]!=='');
+}
+
+async function openMatch(id){
+  const c = state.tennis.byId.get(id); if(!c) return;
+  const d = c.date ? new Date(c.date) : null;
+  const st = c.status?.type?.state;
+  const line = cp => `<div class="dt ${cp.winner?'w':''}">
+      ${playerFlag(cp)}<span class="nm">${esc(playerName(cp))}</span>
+      ${(cp.seed||cp.athlete?.seed)?`<span class="sd">(${esc(cp.seed||cp.athlete.seed)})</span>`:''}
+      <span class="sets num">${(cp.linescores||[]).map(setBox).join('')}</span></div>`;
+  const court = courtOf(c);
+  $('#sheet').innerHTML = `
+    <h2>${esc(roundDE(rawRound(c)))}</h2>
+    <div class="ver">${esc(c.__event||'')} · ${esc(c.__tour||'')}</div>
+    ${(c.competitors||[]).map(line).join('')}
+    <p class="meta">
+      ${d ? esc(fmtDay(d)) + ', ' + esc(fmtTime(d)) + ' Uhr' : 'Termin offen'}
+      ${court ? ' · ' + esc(court) : ''}
+      ${c.status?.type?.detail ? ' · ' + esc(c.status.type.detail) : ''}
+      ${st==='in' ? ' · läuft gerade' : ''}
+    </p>
+    <h3>Statistik</h3>
+    <div id="stats"><p>wird geladen…</p></div>
+    <button class="iconbtn" id="closesheet">Schließen</button>`;
+  $('#modal').hidden = false;
+  $('#closesheet').onclick = closeSettings;
+
+  let rows = [];
+  try{
+    const sum = await getJSON(`${API}tennis/${c.__key||'atp'}/summary?event=${encodeURIComponent(c.id)}`);
+    rows = pullStats(sum);
+  }catch(e){ rows = []; }
+  const box = $('#stats'); if(!box) return;
+  box.innerHTML = rows.length
+    ? rows.map(([l,v])=>`<div class="st"><span class="a num">${esc(v[0])}</span>
+        <span class="lb">${esc(statDE(l))}</span><span class="num">${esc(v[1])}</span></div>`).join('')
+    : '<p>Für diese Partie liefert die Quelle keine Statistik.</p>';
+}
+
+function openSettings(){
+  const saved = readPrefs();
+  $('#sheet').innerHTML = `
+    <h2>TorSpo</h2>
+    <div class="ver">Version ${esc(APP.version)}</div>
+    <h3>Gespeicherte Auswahl</h3>
+    <p>${saved.sport
+        ? 'Zuletzt geöffnet: ' + esc(SPORTS.find(x=>x.id===saved.sport)?.label || saved.sport)
+          + (saved.pick ? ', ' + esc(saved.pick) : '')
+          + '. Favoriten: ' + (state.favs.size ? esc([...state.favs].join(', ')) : 'keine')
+        : 'Noch nichts gespeichert. Ansicht, Turnier, Zoom und Favoriten werden auf diesem Gerät gemerkt.'}</p>
+    <button class="iconbtn" id="clearprefs">Gespeicherte Auswahl löschen</button>
+    <h3>Was ist neu</h3>
+    ${APP.notes.map((n,i)=>`<div class="rel ${i===0?'now':''}">
+      <b>${esc(n.v)}</b><ul>${n.items.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></div>`).join('')}
+    <button class="iconbtn" id="closesheet">Schließen</button>`;
+  $('#modal').hidden = false;
+  $('#closesheet').onclick = closeSettings;
+  $('#clearprefs').onclick = ()=>{
+    try{ localStorage.removeItem(STORE); }catch(e){}
+    state.favs.clear(); state.zoom=null; state.tennis.from=null;
+    closeSettings(); render();
+  };
+}
+function closeSettings(){ $('#modal').hidden = true; }
 
 function render(){
   const y = window.scrollY;
   const d = document.querySelector('.draw');
-  if(d) state.scrollLeft = d.scrollLeft;
+  if(d){ state.scrollLeft = d.scrollLeft; state.scrollTop = d.scrollTop; }
   renderInner();
   const nd = document.querySelector('.draw');
-  if(nd) nd.scrollLeft = state.scrollLeft;
+  if(nd){ nd.scrollLeft = state.scrollLeft; nd.scrollTop = state.scrollTop; }
+  if(state.swap){
+    const v = $('#view');
+    if(v){ v.classList.remove('swap'); void v.offsetWidth; v.classList.add('swap'); }
+    state.swap = false;
+  }
   if(window.scrollY !== y) window.scrollTo(0, y);
+  savePrefs();
 }
 
 function renderInner(){
@@ -688,6 +940,11 @@ function tickClock(){
 }
 
 $('#reload').onclick = ()=>load(true);
+document.title = `TorSpo ${APP.version}`;
+$('#appver').textContent = `v${APP.version}`;
+$('#settings').onclick = openSettings;
+$('#modal').onclick = e=>{ if(e.target.id==='modal') closeSettings(); };
+addEventListener('keydown', e=>{ if(e.key==='Escape') closeSettings(); });
 addEventListener('resize', ()=>requestAnimationFrame(layoutDraw));
 setInterval(tickClock, 1000);
 setInterval(()=>{                       // Auto-Refresh: 30s wenn live, sonst 3 min
@@ -695,6 +952,18 @@ setInterval(()=>{                       // Auto-Refresh: 30s wenn live, sonst 3 
   const wait = state.hasLive ? 30000 : 180000;
   if(Date.now()-state.lastLoad > wait) load(false);
 }, 5000);
+
+// Gespeicherte Auswahl übernehmen
+(function restore(){
+  const p = readPrefs();
+  if(Array.isArray(p.favs)) state.favs = new Set(p.favs);
+  const sp = SPORTS.find(x=>x.id===p.sport); if(sp) state.sport = sp;
+  if(p.pick) state.tennis.pick = p.pick;
+  if(p.group) state.tennis.group = p.group;
+  if(p.from) state.tennis.from = p.from;
+  if(typeof p.zoom === 'number') state.zoom = p.zoom;
+  if(p.lview) state.league.view = p.lview;
+})();
 
 load();
 </script>
