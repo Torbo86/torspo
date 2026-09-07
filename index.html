@@ -31,9 +31,13 @@ header{position:sticky;top:0;z-index:20;background:rgba(245,247,241,.92);backdro
 @media (prefers-reduced-motion:reduce){#view.swap{animation:none}}
 body.wide .bar,body.wide main{max-width:none}
 .bar{max-width:1240px;margin:0 auto;padding:12px 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
-.brand{display:flex;align-items:baseline;gap:10px;margin-right:auto}
-.brand #home{padding:0}
-.brand b{font-size:19px;font-weight:700;letter-spacing:-.01em}
+.brand{display:flex;align-items:center;gap:10px;margin-right:auto}
+.brand #home{display:flex;align-items:center;gap:9px;padding:0}
+.mark{width:29px;height:29px;transition:transform .45s ease;filter:drop-shadow(0 1px 3px rgba(0,90,45,.3))}
+.brand #home:hover .mark{transform:rotate(30deg) scale(1.07)}
+.brand b{font-size:21px;font-weight:800;letter-spacing:-.02em;
+  background:linear-gradient(94deg,#00703c 0%,#35c36a 45%,#c07d16 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
 .brand span{color:var(--muted);font-size:12.5px}
 .brand #appver{color:var(--dim)}
 .brand #crumb:not(:empty)::before{content:'· '}
@@ -56,6 +60,9 @@ main{max-width:1240px;margin:0 auto;padding:16px 16px 60px}
 .chip[aria-pressed="true"]{border-color:var(--accent);color:var(--fg);background:var(--panel2)}
 .sel{background:var(--panel);border:1px solid var(--line);color:var(--fg);border-radius:8px;padding:6px 10px;font:inherit;font-size:13px}
 .hint{color:var(--muted);font-size:13px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:26px}
+@media (max-width:760px){.two{grid-template-columns:1fr}}
+h3.sec{font-size:13px;color:var(--accent);margin:0 0 8px;padding-bottom:6px;border-bottom:2px solid var(--accent)}
 .modal{position:fixed;inset:0;z-index:50;background:rgba(20,34,26,.45);display:flex;align-items:flex-start;justify-content:center;padding:56px 16px}
 .modal[hidden]{display:none}
 .sheet{background:var(--panel);border:1px solid var(--line);border-radius:14px;width:100%;max-width:520px;padding:20px 22px;max-height:80vh;overflow:auto}
@@ -163,7 +170,15 @@ main{max-width:1240px;margin:0 auto;padding:16px 16px 60px}
 
 <header>
   <div class="bar">
-    <div class="brand"><button id="home" title="Zurück zum Start"><b>TorSpo</b></button><em id="appver"></em><span id="crumb"></span></div>
+    <div class="brand"><button id="home" title="Zurück zum Start">
+      <svg class="mark" viewBox="0 0 44 44" aria-hidden="true">
+        <defs><linearGradient id="mg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#e4f75a"/><stop offset=".5" stop-color="#35c36a"/><stop offset="1" stop-color="#00703c"/>
+        </linearGradient></defs>
+        <circle cx="22" cy="22" r="20" fill="url(#mg)"/>
+        <path d="M7 11c9.5 4.5 13.5 13 12 25" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round"/>
+        <path d="M37 11c-9.5 4.5-13.5 13-12 25" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round"/>
+      </svg><b>TorSpo</b></button><em id="appver"></em><span id="crumb"></span></div>
     <nav class="tabs" id="tabs"></nav>
     <div class="status">
       <span class="dot" id="dot"></span>
@@ -195,6 +210,8 @@ const SPORTS = [
     tours:[{key:'atp',label:'ATP'},{key:'wta',label:'WTA'}], path:'tennis' },
   { id:'ger.1',  label:'Bundesliga',    kind:'league', accent:'#b0392c', tint:'#fbe6e1', path:'soccer/ger.1', standings:'soccer/ger.1' },
   { id:'ger.2',  label:'2. Bundesliga', kind:'league', accent:'#c07d16', tint:'#fbeed6', path:'soccer/ger.2', standings:'soccer/ger.2' },
+  { id:'fifa.world', label:'WM', kind:'league', accent:'#2f6fd0', tint:'#e2ecfb', path:'soccer/fifa.world', standings:'soccer/fifa.world' },
+  { id:'uefa.euro',  label:'EM', kind:'league', accent:'#5b57d6', tint:'#e7e6fb', path:'soccer/uefa.euro',  standings:'soccer/uefa.euro' },
   // Beispiele zum Erweitern (einfach Kommentar entfernen):
   // { id:'uefa.champions', label:'Champions League', kind:'league', accent:'#5b57d6', tint:'#e7e6fb', path:'soccer/uefa.champions', standings:'soccer/uefa.champions' },
   // { id:'eng.1', label:'Premier League', kind:'league', accent:'#1f9d74', tint:'#e0f4ec', path:'soccer/eng.1', standings:'soccer/eng.1' },
@@ -202,8 +219,14 @@ const SPORTS = [
 ];
 
 const APP = {
-  version: '1.6.0',
+  version: '1.7.0',
   notes: [
+    { v:'1.7.0', items:[
+      'Neues Logo mit Ball und farbigem Schriftzug',
+      'Torjägerliste für jede Liga',
+      'WM und EM als eigene Reiter',
+      'Tennis-Rangliste nach ATP- und WTA-Punkten',
+      'Grand-Slam-Bestenliste, von Hand gepflegt im Abschnitt SLAMS' ]},
     { v:'1.6.0', items:[
       'Einstellungen gehen wieder auf, ein Fehler beim Start hatte die Knöpfe lahmgelegt',
       'Klick auf TorSpo führt zurück zum Start',
@@ -237,6 +260,25 @@ const APP = {
   ]
 };
 
+// Von Hand gepflegte Liste. Neuen Titel eintragen: Zahl erhoehen, Datum unten anpassen.
+const SLAMS = {
+  stand: '7. September 2026 (vor dem Finale der US Open 2026)',
+  herren: [
+    ['Novak Djokovic',24,true], ['Rafael Nadal',22,false], ['Roger Federer',20,false],
+    ['Pete Sampras',14,false], ['Roy Emerson',12,false], ['Björn Borg',11,false],
+    ['Rod Laver',11,false], ['Bill Tilden',10,false], ['Jimmy Connors',8,false],
+    ['Ivan Lendl',8,false], ['Andre Agassi',8,false], ['Ken Rosewall',8,false],
+    ['Carlos Alcaraz',7,true], ['Jannik Sinner',5,true], ['Alexander Zverev',1,true]
+  ],
+  damen: [
+    ['Margaret Court',24,false], ['Serena Williams',23,false], ['Steffi Graf',22,false],
+    ['Helen Wills Moody',19,false], ['Chris Evert',18,false], ['Martina Navratilova',18,false],
+    ['Billie Jean King',12,false], ['Monica Seles',9,false], ['Maureen Connolly',9,false],
+    ['Suzanne Lenglen',8,false], ['Iga Świątek',6,true], ['Aryna Sabalenka',4,true],
+    ['Elena Rybakina',2,true], ['Mirra Andrejewa',1,true], ['Linda Nosková',1,true]
+  ]
+};
+
 const API  = 'https://site.api.espn.com/apis/site/v2/sports/';
 const APIV2= 'https://site.api.espn.com/apis/v2/sports/';
 
@@ -264,7 +306,7 @@ function savePrefs(){
   try{ localStorage.setItem(STORE, JSON.stringify({
     sport: state.sport.id, favs: [...state.favs], zoom: state.zoom,
     pick: state.tennis.pick, group: state.tennis.group, from: state.tennis.from,
-    lview: state.league.view
+    lview: state.league.view, tview: state.tennis.view
   })); }catch(e){}
 }
 
@@ -272,7 +314,8 @@ const state = {
   sport: SPORTS[0],
   loading:false, error:null, lastLoad:0, hasLive:false,
   sig:'', scrollLeft:0, scrollTop:0, zoom:null, zoomEff:1, dw:1, dh:1, favs:new Set(),
-  tennis:{ tournaments:[], pick:null, group:null, onlyLive:false, from:null, byId:new Map() },
+  ranks:new Map(), scorers:new Map(),
+  tennis:{ tournaments:[], pick:null, group:null, onlyLive:false, from:null, byId:new Map(), view:'draw', rankTour:'atp' },
   league:{ events:[], standings:null, view:'spiele', weekOffset:0, open:new Set(), tickers:new Map() },
 };
 
@@ -381,6 +424,66 @@ async function loadLeague(){
   state.hasLive = state.league.events.some(e=>e.competitions?.[0]?.status?.type?.state==='in');
 }
 function seasonYear(){ const d=new Date(); return d.getMonth()>=6 ? d.getFullYear() : d.getFullYear()-1; }
+
+/* ============ 5b) Rangliste (Tennis) und Torjaeger (Liga) ============ */
+function deepArrays(d){
+  const out=[];
+  const visit=o=>{
+    if(!o || typeof o!=='object') return;
+    if(Array.isArray(o)){
+      if(o.length && o.some(x=>x && typeof x==='object' && (x.athlete||x.competitor))) out.push(o);
+      o.forEach(visit); return;
+    }
+    Object.values(o).forEach(visit);
+  };
+  visit(d); return out;
+}
+function parseRanks(d){
+  const arr = deepArrays(d).sort((a,b)=>b.length-a.length)[0] || [];
+  return arr.map((r,i)=>{
+    const a = r.athlete || r.competitor?.athlete || r.competitor || {};
+    return {
+      rank: r.current ?? r.rank ?? r.currentRank ?? (i+1),
+      name: a.displayName || a.fullName || a.shortName || '',
+      flag: a.flag?.href || '',
+      land: a.flag?.alt || a.citizenship || '',
+      pts:  r.points ?? r.statistics?.[0]?.displayValue ?? r.displayValue ?? ''
+    };
+  }).filter(x=>x.name).slice(0,100);
+}
+async function ensureRanks(tour){
+  if(state.ranks.has(tour)) return;
+  state.ranks.set(tour, null);
+  const urls = [`https://site.web.api.espn.com/apis/site/v2/sports/tennis/${tour}/rankings`,
+                `${API}tennis/${tour}/rankings`];
+  let rows = [];
+  for(const u of urls){ try{ const d = await getJSON(u); rows = parseRanks(d); if(rows.length) break; }catch(e){} }
+  state.ranks.set(tour, rows); render();
+}
+
+function parseScorers(d){
+  let cats = d?.categories || d?.leaders?.categories || d?.leaders || [];
+  if(!Array.isArray(cats)) cats = [cats];
+  const pick = cats.find(c=>/goal|scor/i.test(`${c?.name||''} ${c?.displayName||''} ${c?.abbreviation||''}`)) || cats[0];
+  const list = pick?.leaders || pick?.athletes || [];
+  return (Array.isArray(list)?list:[]).map((l,i)=>({
+    rank:i+1,
+    name: l.athlete?.displayName || l.displayName || '',
+    team: l.team?.displayName || l.athlete?.team?.displayName || '',
+    val:  l.displayValue ?? l.value ?? ''
+  })).filter(x=>x.name).slice(0,30);
+}
+async function ensureScorers(sp){
+  if(state.scorers.has(sp.id)) return;
+  state.scorers.set(sp.id, null);
+  const y = seasonYear();
+  const urls = [`https://site.web.api.espn.com/apis/common/v3/sports/${sp.path}/leaders?season=${y}&seasontype=1&limit=30`,
+                `https://site.web.api.espn.com/apis/common/v3/sports/${sp.path}/leaders?limit=30`,
+                `${API}${sp.path}/leaders`];
+  let rows = [];
+  for(const u of urls){ try{ const d = await getJSON(u); rows = parseScorers(d); if(rows.length) break; }catch(e){} }
+  state.scorers.set(sp.id, rows); render();
+}
 
 /* ========================= 6) Render: Tennis ========================= */
 function setBox(ls){
@@ -557,10 +660,50 @@ function enableGestures(draw){
   }, {passive:true});
 }
 
+function rankTable(rows){
+  return `<table class="tbl"><thead><tr><th>#</th><th>Spielerin oder Spieler</th><th class="r">Punkte</th></tr></thead>
+    <tbody>${rows.map(r=>`<tr><td class="num">${esc(r.rank)}</td>
+      <td><span class="tm">${r.flag?`<img src="${esc(r.flag)}" alt="" style="width:20px;height:14px;object-fit:cover;border-radius:2px">`:''}${esc(r.name)}</span></td>
+      <td class="r num"><b>${esc(r.pts)}</b></td></tr>`).join('')}</tbody></table>`;
+}
+function slamTable(list){
+  return `<table class="tbl"><thead><tr><th>#</th><th>Name</th><th class="r">Titel</th></tr></thead>
+    <tbody>${list.map(([n,t,act],i)=>`<tr><td class="num">${i+1}</td>
+      <td>${esc(n)}${act?' <span class="sd" style="color:var(--accent)">aktiv</span>':''}</td>
+      <td class="r num"><b>${t}</b></td></tr>`).join('')}</tbody></table>`;
+}
+
 function renderTennis(){
-  const T = state.tennis.tournaments.find(t=>t.name===state.tennis.pick);
   const sub = $('#sub'); sub.innerHTML='';
-  if(!T){ $('#view').className='empty'; $('#view').textContent='Aktuell keine Turnierdaten im Zeitraum gefunden.'; return; }
+  const view = $('#view'); view.className='';
+  [['draw','Tableau'],['ranking','Rangliste'],['slams','Grand Slams']].forEach(([k,l])=>{
+    const b=el('button','chip',l); b.setAttribute('aria-pressed', state.tennis.view===k);
+    b.onclick=()=>{ state.tennis.view=k; render(); }; sub.appendChild(b);
+  });
+
+  if(state.tennis.view==='ranking'){
+    state.sport.tours.forEach(t=>{
+      const b=el('button','chip',t.label); b.setAttribute('aria-pressed', state.tennis.rankTour===t.key);
+      b.onclick=()=>{ state.tennis.rankTour=t.key; render(); }; sub.appendChild(b);
+    });
+    const tour = state.tennis.rankTour, rows = state.ranks.get(tour);
+    if(rows === undefined){ ensureRanks(tour); view.className='skel'; view.textContent='Rangliste wird geladen…'; return; }
+    if(rows === null){ view.className='skel'; view.textContent='Rangliste wird geladen…'; return; }
+    view.innerHTML = rows.length ? rankTable(rows)
+      : '<div class="empty">Die Quelle liefert derzeit keine Rangliste für diese Tour.</div>';
+    return;
+  }
+
+  if(state.tennis.view==='slams'){
+    view.innerHTML = `<div class="two">
+      <div><h3 class="sec">Herren</h3>${slamTable(SLAMS.herren)}</div>
+      <div><h3 class="sec">Damen</h3>${slamTable(SLAMS.damen)}</div></div>
+      <p class="hint" style="margin-top:14px">Stand: ${esc(SLAMS.stand)}. Diese Liste pflegst du im Script von Hand unter <code>SLAMS</code>.</p>`;
+    return;
+  }
+
+  const T = state.tennis.tournaments.find(t=>t.name===state.tennis.pick);
+  if(!T){ view.className='empty'; view.textContent='Aktuell keine Turnierdaten im Zeitraum gefunden.'; return; }
 
   const sel = el('select','sel');
   state.tennis.tournaments.forEach(t=>{
@@ -614,7 +757,6 @@ function renderTennis(){
                  .map(([name,list])=>({name, list}));
   linkRounds(rounds);
 
-  const view = $('#view'); view.className='';
   if(!rounds.length){ view.className='empty'; view.textContent='Keine Partien in dieser Auswahl.'; return; }
 
   // Startrunde: erste Runde mit hoechstens 16 Partien, damit der Baum nicht ausufert
@@ -752,7 +894,7 @@ function renderStandings(){
 
 function renderLeague(){
   const sub=$('#sub'); sub.innerHTML='';
-  [['spiele','Spiele'],['tabelle','Tabelle']].forEach(([k,l])=>{
+  [['spiele','Spiele'],['tabelle','Tabelle'],['torjaeger','Torjäger']].forEach(([k,l])=>{
     const b=el('button','chip',l); b.setAttribute('aria-pressed', state.league.view===k);
     b.onclick=()=>{ state.league.view=k; render(); }; sub.appendChild(b);
   });
@@ -768,6 +910,17 @@ function renderLeague(){
 
   const view=$('#view'); view.className='';
   if(state.league.view==='tabelle'){ view.innerHTML = renderStandings(); return; }
+  if(state.league.view==='torjaeger'){
+    const rows = state.scorers.get(state.sport.id);
+    if(rows === undefined){ ensureScorers(state.sport); view.className='skel'; view.textContent='Torjägerliste wird geladen…'; return; }
+    if(rows === null){ view.className='skel'; view.textContent='Torjägerliste wird geladen…'; return; }
+    view.innerHTML = rows.length
+      ? `<table class="tbl"><thead><tr><th>#</th><th>Spieler</th><th class="hide">Verein</th><th class="r">Tore</th></tr></thead>
+         <tbody>${rows.map(r=>`<tr><td class="num">${r.rank}</td><td>${esc(r.name)}</td>
+           <td class="hide">${esc(r.team)}</td><td class="r num"><b>${esc(r.val)}</b></td></tr>`).join('')}</tbody></table>`
+      : '<div class="empty">Für diesen Wettbewerb liefert die Quelle gerade keine Torjägerliste.</div>';
+    return;
+  }
 
   const evs = state.league.events;
   if(!evs.length){ view.className='empty'; view.textContent='In diesem Zeitraum sind keine Spiele angesetzt.'; return; }
@@ -994,6 +1147,7 @@ setInterval(()=>{                       // Auto-Refresh: 30s wenn live, sonst 3 
   if(p.from) state.tennis.from = p.from;
   if(typeof p.zoom === 'number') state.zoom = p.zoom;
   if(p.lview) state.league.view = p.lview;
+  if(p.tview) state.tennis.view = p.tview;
 })();
 
 load();
