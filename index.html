@@ -60,8 +60,29 @@ main{max-width:1240px;margin:0 auto;padding:16px 16px 60px}
 .chip[aria-pressed="true"]{border-color:var(--accent);color:var(--fg);background:var(--panel2)}
 .sel{background:var(--panel);border:1px solid var(--line);color:var(--fg);border-radius:8px;padding:6px 10px;font:inherit;font-size:13px}
 .hint{color:var(--muted);font-size:13px}
+.page{max-width:640px}
+.page .ttl{font-size:20px;margin:0 0 2px}
+.page p{font-size:13.5px;color:var(--muted);margin:0 0 12px}
+details.rel{border-left:2px solid var(--line);padding:0 0 0 12px;margin-bottom:8px}
+details.rel summary{cursor:pointer;font-size:13.5px;font-weight:600;padding:3px 0;list-style:revert}
+details.rel[open] summary{color:var(--accent)}
+details.rel ul{margin:4px 0 8px;padding-left:17px;font-size:13px;color:var(--muted)}
+details.rel li{margin:3px 0}
+.tag{font-size:11px;font-weight:500;color:var(--accent);border:1px solid var(--accent);border-radius:999px;padding:0 7px;margin-left:6px}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:26px}
 @media (max-width:760px){.two{grid-template-columns:1fr}}
+.rank{list-style:none;margin:0;padding:0}
+.rk{display:grid;grid-template-columns:34px 26px 1fr auto;align-items:center;gap:10px;
+  padding:9px 12px 11px;background:var(--panel);border:1px solid var(--line);border-radius:10px;margin-bottom:6px;position:relative}
+.rk .pos{font-size:14px;font-weight:700;color:var(--dim);text-align:center}
+.rk .fl{width:24px;height:16px;object-fit:cover;border-radius:3px;display:block}
+.rk .who{font-size:14.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rk .pts{font-size:14px;font-weight:700;color:var(--accent)}
+.rk .bar{grid-column:1/-1;height:3px;border-radius:2px;background:var(--line);overflow:hidden;margin-top:2px}
+.rk .bar i{display:block;height:100%;background:var(--accent);border-radius:2px}
+.rk.pod{background:linear-gradient(90deg,var(--tint),var(--panel) 55%)}
+.rk.pod .pos{color:var(--accent);font-size:16px}
+.rk.p1{border-color:var(--accent)}
 h3.sec{font-size:13px;color:var(--accent);margin:0 0 8px;padding-bottom:6px;border-bottom:2px solid var(--accent)}
 .modal{position:fixed;inset:0;z-index:50;background:rgba(20,34,26,.45);display:flex;align-items:flex-start;justify-content:center;padding:56px 16px}
 .modal[hidden]{display:none}
@@ -172,12 +193,13 @@ h3.sec{font-size:13px;color:var(--accent);margin:0 0 8px;padding-bottom:6px;bord
   <div class="bar">
     <div class="brand"><button id="home" title="Zurück zum Start">
       <svg class="mark" viewBox="0 0 44 44" aria-hidden="true">
-        <defs><linearGradient id="mg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#e4f75a"/><stop offset=".5" stop-color="#35c36a"/><stop offset="1" stop-color="#00703c"/>
-        </linearGradient></defs>
+        <defs><radialGradient id="mg" cx=".35" cy=".3" r=".85">
+          <stop offset="0" stop-color="#eaff6b"/><stop offset=".6" stop-color="#cbec2f"/><stop offset="1" stop-color="#9dbd18"/>
+        </radialGradient></defs>
         <circle cx="22" cy="22" r="20" fill="url(#mg)"/>
-        <path d="M7 11c9.5 4.5 13.5 13 12 25" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round"/>
-        <path d="M37 11c-9.5 4.5-13.5 13-12 25" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round"/>
+        <path d="M3.9 13.6C12 17 12 27 3.9 30.4" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
+        <path d="M40.1 13.6C32 17 32 27 40.1 30.4" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
+        <circle cx="22" cy="22" r="20" fill="none" stroke="#7f9c12" stroke-width="1.2" opacity=".5"/>
       </svg><b>TorSpo</b></button><em id="appver"></em><span id="crumb"></span></div>
     <nav class="tabs" id="tabs"></nav>
     <div class="status">
@@ -219,8 +241,14 @@ const SPORTS = [
 ];
 
 const APP = {
-  version: '1.7.0',
+  version: '1.8.0',
   notes: [
+    { v:'1.8.0', items:[
+      'Einstellungen sind eine eigene Seite, die Neuigkeiten stehen zugeklappt hinter der Versionsnummer',
+      'Ball sieht jetzt nach Tennisball aus',
+      'Rangliste mit Podestfarben und Punktebalken',
+      'Torjäger und Match-Statistik holen die Daten über mehrere Wege, wenn der erste nichts liefert',
+      'Automatisches Neuladen bleibt nicht mehr hängen, Abrufe brechen nach 12 Sekunden ab' ]},
     { v:'1.7.0', items:[
       'Neues Logo mit Ball und farbigem Schriftzug',
       'Torjägerliste für jede Liga',
@@ -293,10 +321,14 @@ const dayKey = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate()
 const fmtDay = d => d.toLocaleDateString('de-DE',{weekday:'short',day:'numeric',month:'long'});
 const fmtTime= d => d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
 
-async function getJSON(url){
-  const r = await fetch(url, {cache:'no-store'});
-  if(!r.ok) throw new Error(`${r.status} bei ${url.split('?')[0]}`);
-  return r.json();
+async function getJSON(url, ms=12000){
+  const ctl = new AbortController();
+  const t = setTimeout(()=>ctl.abort(), ms);
+  try{
+    const r = await fetch(url, {cache:'no-store', signal:ctl.signal});
+    if(!r.ok) throw new Error(`${r.status} bei ${url.split('?')[0]}`);
+    return await r.json();
+  } finally { clearTimeout(t); }
 }
 
 /* ===================== 3) Zustand + Speicher ===================== */
@@ -386,7 +418,7 @@ async function loadTennis(){
       tennisComps(ev).forEach(({c,group})=>{
         if(T.seen.has(c.id)) return;
         T.seen.add(c.id);
-        c.__tour = value.tour; c.__key = value.key; c.__event = name;
+        c.__tour = value.tour; c.__key = value.key; c.__event = name; c.__evid = ev.id;
         const g = groupDE(group);
         if(!T.groups.has(g)) T.groups.set(g,[]);
         T.groups.get(g).push(c);
@@ -473,6 +505,26 @@ function parseScorers(d){
     val:  l.displayValue ?? l.value ?? ''
   })).filter(x=>x.name).slice(0,30);
 }
+// Weg 2: Core-API. Dort stehen nur Verweise, die Namen werden einzeln nachgeladen.
+async function coreScorers(sp, y){
+  const lg = sp.path.split('/')[1], sport = sp.path.split('/')[0];
+  const base = `https://sports.core.api.espn.com/v2/sports/${sport}/leagues/${lg}/seasons/${y}/types/1/leaders`;
+  const d = await getJSON(base);
+  const cats = d?.categories || [];
+  const cat = cats.find(c=>/goals/i.test(`${c.name||''} ${c.displayName||''}`) && !/assist|against/i.test(`${c.name||''}`)) || cats[0];
+  const list = (cat?.leaders || []).slice(0,25);
+  const rows = await Promise.all(list.map(async (l,i)=>{
+    let name = '', team = '';
+    try{
+      const a = await getJSON(l.athlete.$ref.replace('http://','https://'));
+      name = a.displayName || a.fullName || '';
+      if(a.team?.$ref){ try{ const t = await getJSON(a.team.$ref.replace('http://','https://')); team = t.displayName||''; }catch(e){} }
+    }catch(e){}
+    return { rank:i+1, name, team, val: l.displayValue ?? l.value ?? '' };
+  }));
+  return rows.filter(r=>r.name);
+}
+
 async function ensureScorers(sp){
   if(state.scorers.has(sp.id)) return;
   state.scorers.set(sp.id, null);
@@ -482,6 +534,10 @@ async function ensureScorers(sp){
                 `${API}${sp.path}/leaders`];
   let rows = [];
   for(const u of urls){ try{ const d = await getJSON(u); rows = parseScorers(d); if(rows.length) break; }catch(e){} }
+  if(!rows.length){ try{ rows = await coreScorers(sp, y); }catch(e){} }
+  if(!rows.length && seasonYear() !== new Date().getFullYear()){
+    try{ rows = await coreScorers(sp, new Date().getFullYear()); }catch(e){}
+  }
   state.scorers.set(sp.id, rows); render();
 }
 
@@ -661,10 +717,18 @@ function enableGestures(draw){
 }
 
 function rankTable(rows){
-  return `<table class="tbl"><thead><tr><th>#</th><th>Spielerin oder Spieler</th><th class="r">Punkte</th></tr></thead>
-    <tbody>${rows.map(r=>`<tr><td class="num">${esc(r.rank)}</td>
-      <td><span class="tm">${r.flag?`<img src="${esc(r.flag)}" alt="" style="width:20px;height:14px;object-fit:cover;border-radius:2px">`:''}${esc(r.name)}</span></td>
-      <td class="r num"><b>${esc(r.pts)}</b></td></tr>`).join('')}</tbody></table>`;
+  const num = v => Number(String(v).replace(/[^0-9]/g,'')) || 0;
+  const top = Math.max(1, ...rows.map(r=>num(r.pts)));
+  return `<ol class="rank">${rows.map(r=>{
+    const pos = Number(r.rank) || 0, w = Math.max(2, num(r.pts)/top*100);
+    return `<li class="rk${pos<=3?' pod p'+pos:''}">
+      <span class="pos num">${esc(r.rank)}</span>
+      ${r.flag?`<img class="fl" src="${esc(r.flag)}" alt="" loading="lazy">`:'<span class="fl"></span>'}
+      <span class="who">${esc(r.name)}</span>
+      <span class="pts num">${esc(r.pts)}</span>
+      <span class="bar"><i style="width:${w.toFixed(1)}%"></i></span>
+    </li>`;
+  }).join('')}</ol>`;
 }
 function slamTable(list){
   return `<table class="tbl"><thead><tr><th>#</th><th>Name</th><th class="r">Titel</th></tr></thead>
@@ -947,7 +1011,7 @@ function renderTabs(){
   SPORTS.forEach(s=>{
     const b=el('button','tab',esc(s.label));
     b.setAttribute('aria-selected', s.id===state.sport.id);
-    b.onclick=()=>{ if(s.id===state.sport.id) return; state.sport=s; state.league.open.clear(); state.league.tickers.clear(); load(); };
+    b.onclick=()=>{ const same = s.id===state.sport.id && state.page==='app'; state.page='app'; if(same) return; state.sport=s; state.league.open.clear(); state.league.tickers.clear(); load(); };
     nav.appendChild(b);
   });
   const root = document.documentElement;
@@ -967,8 +1031,10 @@ const STAT_DE = {
 };
 const statDE = l => STAT_DE[String(l).toLowerCase()] || l;
 
-function pullStats(d){
-  const cps = d?.competitions?.[0]?.competitors || d?.boxscore?.players || d?.competitors || [];
+function pullStats(d, cid){
+  const comps = Array.isArray(d?.competitions) ? d.competitions : [];
+  const match = comps.find(c=>String(c.id)===String(cid)) || comps[0];
+  const cps = match?.competitors || d?.boxscore?.players || d?.competitors || [];
   const rows = new Map();
   cps.slice(0,2).forEach((cp,i)=>{
     let raw = cp.statistics || cp.stats || [];
@@ -1007,16 +1073,57 @@ async function openMatch(id){
   $('#modal').hidden = false;
   $('#closesheet').onclick = closeSettings;
 
+  const key = c.__key || 'atp';
+  const cand = [
+    `${API}tennis/${key}/summary?event=${encodeURIComponent(c.id)}`,
+    `${API}tennis/${key}/summary?event=${encodeURIComponent(c.__evid||'')}&competition=${encodeURIComponent(c.id)}`,
+    `https://site.web.api.espn.com/apis/site/v2/sports/tennis/${key}/summary?event=${encodeURIComponent(c.__evid||'')}&competition=${encodeURIComponent(c.id)}`
+  ];
   let rows = [];
-  try{
-    const sum = await getJSON(`${API}tennis/${c.__key||'atp'}/summary?event=${encodeURIComponent(c.id)}`);
-    rows = pullStats(sum);
-  }catch(e){ rows = []; }
+  for(const u of cand){
+    try{ const sum = await getJSON(u); rows = pullStats(sum, c.id); if(rows.length) break; }catch(e){}
+  }
   const box = $('#stats'); if(!box) return;
   box.innerHTML = rows.length
     ? rows.map(([l,v])=>`<div class="st"><span class="a num">${esc(v[0])}</span>
         <span class="lb">${esc(statDE(l))}</span><span class="num">${esc(v[1])}</span></div>`).join('')
     : '<p>Für diese Partie liefert die Quelle keine Statistik.</p>';
+}
+
+function renderSettings(){
+  const saved = readPrefs();
+  $('#sub').innerHTML = '';
+  const back = el('button','chip','← Zurück');
+  back.onclick = ()=>{ state.page='app'; render(); };
+  $('#sub').appendChild(back);
+  const view = $('#view'); view.className='';
+  view.innerHTML = `
+    <div class="page">
+      <h2 class="ttl">Einstellungen</h2>
+      <p class="hint">TorSpo Version ${esc(APP.version)}</p>
+
+      <h3 class="sec">Gespeicherte Auswahl</h3>
+      <p>${saved.sport
+          ? 'Zuletzt geöffnet: ' + esc(SPORTS.find(x=>x.id===saved.sport)?.label || saved.sport)
+            + (saved.pick ? ', ' + esc(saved.pick) : '')
+            + '<br>Favoriten: ' + (state.favs.size ? esc([...state.favs].join(', ')) : 'keine')
+          : 'Noch nichts gespeichert. Ansicht, Turnier, Zoom und Favoriten werden auf diesem Gerät gemerkt.'}</p>
+      <button class="iconbtn" id="clearprefs">Gespeicherte Auswahl löschen</button>
+
+      <h3 class="sec">Was ist neu</h3>
+      ${APP.notes.map((n,i)=>`<details class="rel ${i===0?'now':''}">
+        <summary>Version ${esc(n.v)}${i===0?' <span class="tag">aktuell</span>':''}</summary>
+        <ul>${n.items.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></details>`).join('')}
+
+      <h3 class="sec">Datenquelle</h3>
+      <p>Alle Ergebnisse kommen live von den offenen ESPN-Schnittstellen. Die Grand-Slam-Bestenliste
+      wird im Script von Hand gepflegt, Stand ${esc(SLAMS.stand)}.</p>
+    </div>`;
+  $('#clearprefs').onclick = ()=>{
+    try{ localStorage.removeItem(STORE); }catch(e){}
+    state.favs.clear(); state.zoom=null; state.tennis.from=null;
+    render();
+  };
 }
 
 function openSettings(){
@@ -1073,6 +1180,7 @@ function renderInner(){
     return;
   }
   if(state.loading && !state.lastLoad){ $('#view').className='skel'; $('#view').textContent='Daten werden geladen…'; return; }
+  if(state.page==='settings'){ renderSettings(); return; }
   if(state.sport.kind==='draw') renderTennis(); else renderLeague();
 }
 
@@ -1089,7 +1197,7 @@ function signature(){
 }
 
 async function load(force=true){
-  state.loading=true; state.error=null;
+  state.loading=true; state.loadStart=Date.now(); state.error=null;
   if(force && !state.lastLoad) render();
   tickClock();
   try{
@@ -1118,6 +1226,7 @@ const verEl = $('#appver'); if(verEl) verEl.textContent = `v${APP.version}`;
 
 function goHome(){
   closeSettings();
+  state.page='app';
   state.sport = SPORTS[0];
   state.tennis.pick = null; state.tennis.group = null; state.tennis.from = null; state.tennis.onlyLive = false;
   state.league.view = 'spiele'; state.league.weekOffset = 0;
@@ -1126,13 +1235,16 @@ function goHome(){
   load(true);
 }
 $('#home').onclick = goHome;
-$('#settings').onclick = openSettings;
+$('#settings').onclick = ()=>{ state.page = state.page==='settings' ? 'app' : 'settings'; window.scrollTo(0,0); render(); };
 $('#modal').onclick = e=>{ if(e.target.id==='modal') closeSettings(); };
 addEventListener('keydown', e=>{ if(e.key==='Escape') closeSettings(); });
 addEventListener('resize', ()=>requestAnimationFrame(layoutDraw));
 setInterval(tickClock, 1000);
 setInterval(()=>{                       // Auto-Refresh: 30s wenn live, sonst 3 min
-  if(state.loading) return;
+  if(state.loading){
+    if(Date.now() - (state.loadStart||0) > 25000){ state.loading = false; }
+    return;
+  }
   const wait = state.hasLive ? 30000 : 180000;
   if(Date.now()-state.lastLoad > wait) load(false);
 }, 5000);
