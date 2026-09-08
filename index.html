@@ -188,6 +188,7 @@ h3.sec{font-size:13px;color:var(--accent);margin:0 0 8px;padding-bottom:6px;bord
 .tbl .tm{display:flex;align-items:center;gap:8px}
 .tbl .tm img{width:18px;height:18px;object-fit:contain}
 .tbl .r{text-align:right}
+.tbl .land{color:var(--muted);font-size:12px;letter-spacing:.04em;white-space:nowrap}
 @media (max-width:640px){
   .grow{grid-template-columns:52px 1fr auto 1fr;gap:6px}
   .team img{width:18px;height:18px}
@@ -243,8 +244,13 @@ const SPORTS = [
 ];
 
 const APP = {
-  version: '2.6.0',
+  version: '2.8.0',
   notes: [
+    { v:'2.8.0', items:[
+      'Grand-Slam-Listen zeigen die Nationalität als Länderkürzel' ]},
+    { v:'2.7.0', items:[
+      'Grand-Slam-Liste vervollständigt, unter anderem mit Becker, Edberg, McEnroe, Wilander und Newcombe',
+      'Aktive Spielerinnen und Spieler stehen in einer eigenen Liste darunter statt zwischen den Rekordhaltern' ]},
     { v:'2.6.0', items:[
       'Statt leerer Statistik jetzt Zahlen aus dem Satzverlauf: Sätze, Spiele, Tiebreaks',
       'Bei noch nicht gespielten Partien steht das auch so da',
@@ -319,20 +325,32 @@ const APP = {
 
 // Von Hand gepflegte Liste. Neuen Titel eintragen: Zahl erhoehen, Datum unten anpassen.
 const SLAMS = {
-  stand: '7. September 2026 (vor dem Finale der US Open 2026)',
+  stand: '8. September 2026, vor dem Finale der US Open 2026',
   herren: [
-    ['Novak Djokovic',24,true], ['Rafael Nadal',22,false], ['Roger Federer',20,false],
-    ['Pete Sampras',14,false], ['Roy Emerson',12,false], ['Björn Borg',11,false],
-    ['Rod Laver',11,false], ['Bill Tilden',10,false], ['Jimmy Connors',8,false],
-    ['Ivan Lendl',8,false], ['Andre Agassi',8,false], ['Ken Rosewall',8,false],
-    ['Carlos Alcaraz',7,true], ['Jannik Sinner',5,true], ['Alexander Zverev',1,true]
+    ['Novak Djokovic','SRB',24,true], ['Rafael Nadal','ESP',22,false], ['Roger Federer','SUI',20,false],
+    ['Pete Sampras','USA',14,false], ['Roy Emerson','AUS',12,false], ['Björn Borg','SWE',11,false],
+    ['Rod Laver','AUS',11,false], ['Bill Tilden','USA',10,false], ['Jimmy Connors','USA',8,false],
+    ['Ivan Lendl','TCH/USA',8,false], ['Andre Agassi','USA',8,false], ['Ken Rosewall','AUS',8,false],
+    ['Fred Perry','GBR',8,false], ['Carlos Alcaraz','ESP',7,true], ['John McEnroe','USA',7,false],
+    ['Mats Wilander','SWE',7,false], ['John Newcombe','AUS',7,false], ['René Lacoste','FRA',7,false],
+    ['William Renshaw','GBR',7,false], ['Richard Sears','USA',7,false], ['William Larned','USA',7,false],
+    ['Boris Becker','GER',6,false], ['Stefan Edberg','SWE',6,false]
+  ],
+  herrenAktiv: [
+    ['Novak Djokovic','SRB',24], ['Carlos Alcaraz','ESP',7],
+    ['Jannik Sinner','ITA',5], ['Alexander Zverev','GER',1]
   ],
   damen: [
-    ['Margaret Court',24,false], ['Serena Williams',23,false], ['Steffi Graf',22,false],
-    ['Helen Wills Moody',19,false], ['Chris Evert',18,false], ['Martina Navratilova',18,false],
-    ['Billie Jean King',12,false], ['Monica Seles',9,false], ['Maureen Connolly',9,false],
-    ['Suzanne Lenglen',8,false], ['Iga Świątek',6,true], ['Aryna Sabalenka',4,true],
-    ['Elena Rybakina',2,true], ['Mirra Andrejewa',1,true], ['Linda Nosková',1,true]
+    ['Margaret Court','AUS',24,false], ['Serena Williams','USA',23,false], ['Steffi Graf','GER',22,false],
+    ['Helen Wills Moody','USA',19,false], ['Chris Evert','USA',18,false], ['Martina Navratilova','TCH/USA',18,false],
+    ['Billie Jean King','USA',12,false], ['Maureen Connolly','USA',9,false], ['Monica Seles','YUG/USA',9,false],
+    ['Suzanne Lenglen','FRA',8,false], ['Molla Mallory','NOR/USA',8,false], ['Maria Bueno','BRA',7,false],
+    ['Justine Henin','BEL',7,false], ['Venus Williams','USA',7,false], ['Evonne Goolagong','AUS',7,false],
+    ['Iga Świątek','POL',6,true], ['Margaret Osborne duPont','USA',6,false], ['Louise Brough','USA',6,false]
+  ],
+  damenAktiv: [
+    ['Iga Świątek','POL',6], ['Aryna Sabalenka','BLR',4], ['Elena Rybakina','KAZ',2],
+    ['Mirra Andrejewa','RUS',1], ['Linda Nosková','CZE',1]
   ]
 };
 
@@ -786,9 +804,10 @@ function rankTable(rows){
 }
 
 function slamTable(list){
-  return `<table class="tbl"><thead><tr><th>#</th><th>Name</th><th class="r">Titel</th></tr></thead>
-    <tbody>${list.map(([n,t,act],i)=>`<tr><td class="num">${i+1}</td>
+  return `<table class="tbl"><thead><tr><th>#</th><th>Name</th><th>Land</th><th class="r">Titel</th></tr></thead>
+    <tbody>${list.map(([n,c,t,act],i)=>`<tr><td class="num">${i+1}</td>
       <td>${esc(n)}${act?' <span class="sd" style="color:var(--accent)">aktiv</span>':''}</td>
+      <td class="land">${esc(c)}</td>
       <td class="r num"><b>${t}</b></td></tr>`).join('')}</tbody></table>`;
 }
 
@@ -815,8 +834,10 @@ function renderTennis(){
 
   if(state.tennis.view==='slams'){
     view.innerHTML = `<div class="two">
-      <div><h3 class="sec">Herren</h3>${slamTable(SLAMS.herren)}</div>
-      <div><h3 class="sec">Damen</h3>${slamTable(SLAMS.damen)}</div></div>
+      <div><h3 class="sec">Herren, Rekordhalter</h3>${slamTable(SLAMS.herren)}
+        <h3 class="sec" style="margin-top:22px">Herren, aktive Spieler</h3>${slamTable(SLAMS.herrenAktiv)}</div>
+      <div><h3 class="sec">Damen, Rekordhalterinnen</h3>${slamTable(SLAMS.damen)}
+        <h3 class="sec" style="margin-top:22px">Damen, aktive Spielerinnen</h3>${slamTable(SLAMS.damenAktiv)}</div></div>
       <p class="hint" style="margin-top:14px">Stand: ${esc(SLAMS.stand)}. Diese Liste pflegst du im Script von Hand unter <code>SLAMS</code>.</p>`;
     return;
   }
