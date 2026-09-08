@@ -243,8 +243,12 @@ const SPORTS = [
 ];
 
 const APP = {
-  version: '2.5.0',
+  version: '2.6.0',
   notes: [
+    { v:'2.6.0', items:[
+      'Statt leerer Statistik jetzt Zahlen aus dem Satzverlauf: Sätze, Spiele, Tiebreaks',
+      'Bei noch nicht gespielten Partien steht das auch so da',
+      'Technische Platzhalter wie M/d - TBD werden nicht mehr angezeigt' ]},
     { v:'2.5.0', items:[
       'Echtes Ballfoto als Logo und App-Symbol, für die Kopfzeile rund freigestellt' ]},
     { v:'2.4.0', items:[
@@ -1155,6 +1159,39 @@ async function coreStats(key, evid, cid){
   return [...rows.entries()].filter(([,v])=>v[0]!=='' || v[1]!=='');
 }
 
+function cleanDetail(c){
+  const d = c.status?.type?.detail || '';
+  if(!d || /TBD|M\/d|\bd\/M\b|'/.test(d)) return '';
+  return d;
+}
+
+// Aus dem Satzverlauf ableitbare Zahlen, unabhaengig von der Quelle
+function localStats(c){
+  const cps = (c.competitors||[]).slice(0,2);
+  if(cps.length < 2) return [];
+  const ls = cps.map(cp=>cp.linescores||[]);
+  const n = Math.max(ls[0].length, ls[1].length);
+  if(!n) return [];
+  const sets=[0,0], games=[0,0]; let tb=[0,0], tbPlayed=0;
+  for(let i=0;i<n;i++){
+    const a = Number(ls[0][i]?.value), b = Number(ls[1][i]?.value);
+    if(!Number.isFinite(a) || !Number.isFinite(b)) continue;
+    games[0]+=a; games[1]+=b;
+    if(a>b) sets[0]++; else if(b>a) sets[1]++;
+    const ta = ls[0][i]?.tiebreak ?? ls[0][i]?.tieBreak;
+    const tbb = ls[1][i]?.tiebreak ?? ls[1][i]?.tieBreak;
+    if(ta!=null || tbb!=null){
+      tbPlayed++;
+      if(Number(ta) > Number(tbb)) tb[0]++; else if(Number(tbb) > Number(ta)) tb[1]++;
+    }
+  }
+  const rows = [['Sätze', [sets[0], sets[1]]], ['Spiele gesamt', [games[0], games[1]]]];
+  if(tbPlayed) rows.push(['Tiebreaks gewonnen', [tb[0], tb[1]]]);
+  const diff = games[0]-games[1];
+  rows.push(['Spieldifferenz', [diff>0?'+'+diff:diff, diff<0?'+'+(-diff):-diff]]);
+  return rows;
+}
+
 async function openMatch(id){
   const c = state.tennis.byId.get(id); if(!c) return;
   const d = c.date ? new Date(c.date) : null;
@@ -1171,10 +1208,10 @@ async function openMatch(id){
     <p class="meta">
       ${d ? esc(fmtDay(d)) + ', ' + esc(fmtTime(d)) + ' Uhr' : 'Termin offen'}
       ${court ? ' · ' + esc(court) : ''}
-      ${c.status?.type?.detail ? ' · ' + esc(c.status.type.detail) : ''}
+      ${cleanDetail(c) ? ' · ' + esc(cleanDetail(c)) : ''}
       ${st==='in' ? ' · läuft gerade' : ''}
     </p>
-    <h3>Statistik</h3>
+    <h3>Zahlen zur Partie</h3>
     <div id="stats"><p>wird geladen…</p></div>
     <button class="iconbtn" id="closesheet">Schließen</button>`;
   $('#modal').hidden = false;
@@ -1194,10 +1231,20 @@ async function openMatch(id){
     try{ rows = await coreStats(key, c.__evid, c.id); }catch(e){}
   }
   const box = $('#stats'); if(!box) return;
+  let note = '';
+  if(!rows.length){
+    if(st === 'pre'){
+      box.innerHTML = '<p>Die Partie wurde noch nicht gespielt.</p>';
+      return;
+    }
+    rows = localStats(c);
+    note = '<p style="margin-top:10px">Aces, Doppelfehler und Aufschlagquoten gibt die Quelle nicht heraus. '
+         + 'Die Zahlen oben sind aus dem Satzverlauf berechnet.</p>';
+  }
   box.innerHTML = rows.length
     ? rows.map(([l,v])=>`<div class="st"><span class="a num">${esc(v[0])}</span>
-        <span class="lb">${esc(statDE(l))}</span><span class="num">${esc(v[1])}</span></div>`).join('')
-    : '<p>Für diese Partie liefert die Quelle keine Statistik.</p>';
+        <span class="lb">${esc(statDE(l))}</span><span class="num">${esc(v[1])}</span></div>`).join('') + note
+    : '<p>Zu dieser Partie liegen keine Zahlen vor.</p>';
 }
 
 function renderSettings(){
